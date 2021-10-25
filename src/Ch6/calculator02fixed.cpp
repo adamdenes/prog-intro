@@ -194,7 +194,7 @@ try
     while (cin) {
         Token t = ts.get();
 
-        if (t.kind == 'x') return 0; // 'x' for quit
+        if (t.kind == 'x') break; // 'x' for quit
         if (t.kind == '=')        // '=' for "print now"
             cout << "=" << val << '\n';
         else
