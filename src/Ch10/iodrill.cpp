@@ -1,22 +1,52 @@
 #include "Point.h"
 #include "../std_lib_facilities.h"
 
-Point::Point() : x{0}, y{0} {}
-Point::Point(int xx, int yy) : x{xx}, y{yy} {}
-
-int Point::get_x() const { return x; }
-int Point::get_y() const { return y; }
-
-void end_of_loop(istream &is, char term, const string &msg)
+void handle_failbit(istream &is, char term, const string &msg)
 {
-    if (is.fail())
+    is.clear();
+    char ch;
+    if (is >> ch && ch == term)
     {
-        is.clear();
-        char ch;
-        if (is >> ch && ch == term)
-            return;
-        error(msg);
+        cout << "terminating --> '" << ch << '\'' << endl;
+        return;
     }
+    error(msg);
+}
+
+Point get_coordinates()
+{
+    static constexpr int failed = -1234;
+
+    int x, y;
+    char ch1, ch2, ch3;
+
+    while (true)
+    {
+        cin >> ch1 >> x >> ch2 >> y >> ch3;
+        if (cin.fail())
+        {
+            handle_failbit(cin, '*', "bad/no input");
+            return Point{failed, failed};
+        }
+        return Point{x, y};
+    }
+}
+
+void input_loop(int counter, vector<Point> &v)
+{
+    int i = 0;
+    while (i < counter)
+    {
+        Point p = get_coordinates();
+        // failed to get value or terminated?
+        if (p.get_x() == -1234 && p.get_y() == -1234)
+        {
+            break;
+        }
+        v.push_back(p);
+        ++i;
+    }
+    return;
 }
 
 iostream &operator>>(iostream &is, Point &p)
@@ -24,21 +54,15 @@ iostream &operator>>(iostream &is, Point &p)
     int x, y;
     char ch1, ch2, ch3;
 
-    is.exceptions(is.exceptions() | ios_base::badbit);
-
-    if (is >> ch1 && ch1 != '(')
+    is >> ch1 >> x >> ch2 >> y >> ch3;
+    if (!is)
+        return is;
+    if (ch1 != '(' || ch2 != ',' || ch3 != ')')
     {
         is.unget();
         is.clear(ios_base::failbit);
         return is;
     }
-
-    is >> x >> ch2 >> y >> ch3;
-    if (!is || ch2 != ',' || ch3 != ')')
-    {
-        error("bad reading");
-    }
-    end_of_loop(is, '*', "bad termination character");
 
     p = Point{x, y};
     return is;
@@ -70,20 +94,52 @@ void write_file(ofstream &ofs, string fname, vector<Point> &o)
     ofs.close();
 }
 
-// void read_file(ifstream &ifs, string fname, vector<Point> &i)
-// {
-//     if (!ifs)
-//         error("can't open file", fname);
+void read_file(ifstream &ifs, string fname, vector<Point> &i)
+{
+    if (!ifs)
+        error("can't open file", fname);
 
-//     int x1, y1;
-//     char ch1, ch2, ch3;
+    int x1, y1;
+    char ch1, ch2, ch3;
 
-//     while (true)
-//     {
-//         ifs >> ch1 >> x1 >> ch2 >> y1 >> ch3;
-//         i.push_back(Point{x1, y1});
-//     }
-// }
+    while (true)
+    {
+        ifs >> ch1 >> x1 >> ch2 >> y1 >> ch3;
+        if (ifs.bad() || ifs.eof())
+            break;
+        i.push_back(Point{x1, y1});
+    }
+}
+
+bool compare_vec_size(vector<Point> &original, vector<Point> &processed)
+{
+    if (original.size() != processed.size())
+    {
+        return false;
+    }
+    return true;
+}
+
+void compare_vals(vector<Point> &original, vector<Point> &processed)
+{
+    for (int i = 0; i < original.size(); ++i)
+    {
+        if (original[i].get_x() != processed[i].get_x() &&
+            original[i].get_y() != processed[i].get_y())
+        {
+            cout << "Something's wrong! -> Point values differ.\n"
+                 << original[i].get_x()
+                 << " != "
+                 << processed[i].get_x()
+                 << " && "
+                 << original[i].get_y()
+                 << " != "
+                 << processed[i].get_y()
+                 << endl;
+        }
+    }
+    cout << "All good!" << endl;
+}
 
 int main()
 try
@@ -92,15 +148,7 @@ try
     char ch1, ch2, ch3;
     vector<Point> original_points;
     cout << "Please enter 7 coordinates in the form of '(x,y)':\n";
-
-    while (cin >> ch1 >> x >> ch2 >> y >> ch3)
-    {
-        if (!cin)
-        {
-            break;
-        }
-        original_points.push_back(Point{x, y});
-    }
+    input_loop(7, original_points);
 
     print_vector(original_points);
     string file{"mydata.txt"};
@@ -109,20 +157,10 @@ try
 
     vector<Point> processed_points;
     ifstream ifs{file};
-    // read_file(ifs, file, processed_points);
-
-    while (true)
-    {
-        ifs >> ch1 >> x >> ch2 >> y >> ch3;
-        if (!ifs)
-        {
-            break;
-        }
-        processed_points.push_back(Point{x, y});
-    }
+    read_file(ifs, file, processed_points);
     print_vector(processed_points);
 
-    if (original_points.size() != processed_points.size())
+    if (!compare_vec_size(original_points, processed_points))
     {
         cout << "Something's wrong! -> vector sizes differ.\n"
              << original_points.size()
@@ -132,23 +170,7 @@ try
     }
     else
     {
-        for (int i = 0; i < original_points.size(); ++i)
-        {
-            if (original_points[i].get_x() != processed_points[i].get_x() &&
-                original_points[i].get_y() != processed_points[i].get_y())
-            {
-                cout << "Something's wrong! -> Point values differ.\n"
-                     << original_points[i].get_x()
-                     << " != "
-                     << processed_points[i].get_x()
-                     << " && "
-                     << original_points[i].get_y()
-                     << " != "
-                     << processed_points[i].get_y()
-                     << endl;
-            }
-        }
-        cout << "All good!" << endl;
+        compare_vals(original_points, processed_points);
     }
 
     return 0;
