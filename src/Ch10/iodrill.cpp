@@ -15,7 +15,7 @@ void handle_failbit(istream &is, char term, const string &msg)
 
 Point get_coordinates()
 {
-    static constexpr int failed = -1234;
+    static constexpr int terminated = -1234;
 
     int x, y;
     char ch1, ch2, ch3;
@@ -26,7 +26,7 @@ Point get_coordinates()
         if (cin.fail())
         {
             handle_failbit(cin, '*', "bad/no input");
-            return Point{failed, failed};
+            return Point{terminated, terminated};
         }
         return Point{x, y};
     }
@@ -54,7 +54,7 @@ iostream &operator>>(iostream &is, Point &p)
     int x, y;
     char ch1, ch2, ch3;
 
-    is >> ch1 >> x >> ch2 >> y >> ch3;
+    is >> ch1;
     if (!is)
         return is;
     if (ch1 != '(' || ch2 != ',' || ch3 != ')')
