@@ -3,7 +3,18 @@
 /* enum class */
 enum class Month
 {
-    jan = 1, feb, mar, apr, may, jun, jul, aug, sep, oct, nov, dec
+    jan = 1,
+    feb,
+    mar,
+    apr,
+    may,
+    jun,
+    jul,
+    aug,
+    sep,
+    oct,
+    nov,
+    dec
 };
 
 Month operator++(Month &m)
@@ -34,6 +45,10 @@ private:
     Month m;
 
 public:
+    class Invalid
+    {
+    };
+    Date();
     Date(int y, Month m, int d);
 
     // const functions (getters)
@@ -63,23 +78,58 @@ ostream &operator<<(ostream &os, const Date &d)
               << ',' << d.day()
               << ')';
 }
+
+int randomizer(int min, int max)
+{
+    static bool first = true;
+    if (first)
+    {
+        srand(time(NULL));
+        first = false;
+    }
+    int random = min + rand() % ((max + 1) - min);
+    cout << "r=" << random << endl;
+    return random;
+}
+
+void print_vector(const vector<Date> &dates)
+{
+    cout << "Vector { ";
+    for (const Date &d : dates)
+    {
+        cout << d;
+    }
+    cout << " }" << endl;
+}
 /* end helper functions */
 
 /* class Date definitions  */
+Date::Date() : y{2001}, m{Month::jan}, d{1} {}
+
 Date::Date(int yy, Month mm, int dd)
+    : y{yy}, m{mm}, d{dd}
 {
-    y = (yy <= 0) ? 2001 : yy;
-    m = (int(mm) >= 1 || int(mm) <= 12) ? mm : Month::jan;
-    d = (dd < 1 || dd > 31) ? 1 : dd;
+    if (yy <= 0 || (int(mm) < 1 || int(mm) > 12) || (dd < 1 || dd > 31))
+        throw Invalid{};
 }
 
 void Date::add_year(int n)
 {
+    if (n < 1)
+    {
+        cout << "Invalid 'n' in add_year(" << n << ")" << endl;
+        throw Invalid{};
+    }
     y += n;
 }
 
 void Date::add_month(int n)
 {
+    if (n < 1)
+    {
+        cout << "Invalid 'n' in add_month(" << n << ")" << endl;
+        throw Invalid{};
+    }
     if ((int(m) + n) >= 1 && (int(m) + n) <= 12)
     {
         m += n;
@@ -90,8 +140,8 @@ void Date::add_month(int n)
         {
             y += (int(m) + n) / 12;
             m = Month::jan;
-        } 
-        else 
+        }
+        else
         {
             y += int((int(m) + n) / 12);
             m = Month((int(m) + n) % 12);
@@ -101,6 +151,11 @@ void Date::add_month(int n)
 
 void Date::add_day(int n)
 {
+    if (n < 1)
+    {
+        cout << "Invalid 'n' in add_day(" << n << ")" << endl;
+        throw Invalid{};
+    }
     static int max{0};
 
     switch (m)
@@ -132,6 +187,7 @@ void Date::add_day(int n)
 /* end class Date definitions */
 
 int main()
+try
 {
     Date today{1978, Month::jun, 25};
     // Date today{2004, Month::dec, -5};
@@ -151,9 +207,44 @@ int main()
     // tomorrow.add_month(14);
     // tomorrow.add_month(33);
 
-    // testing year converison 
+    // testing year converison
     tomorrow.add_year(1);
 
     cout << "today:\t\t" << today << "\ntomorrow:\t" << tomorrow << endl;
+
+    // create random valid dates
+    vector<Date> dates{};
+
+    for (int i = 0; i < 2; ++i)
+    {
+        Date d;
+        d = Date{randomizer(1, 2050), Month(randomizer(1, 12)), randomizer(1, 31)};
+        dates.push_back(d);
+    }
+
+    // print vector
+    print_vector(dates);
+
+    // add random values to dates
+    for (Date &d : dates)
+    {
+        d.add_year(randomizer(-50, 2040));
+        d.add_month(randomizer(-1, 15));
+        d.add_day(randomizer(-1, 35));
+    }
+
+    // print vector if adding random values is successful
+    print_vector(dates);
+
     return 0;
+}
+catch (Date::Invalid)
+{
+    cerr << "Invalid Date" << endl;
+    return 1;
+}
+catch (exception &e)
+{
+    cerr << e.what() << endl;
+    return 2;
 }
