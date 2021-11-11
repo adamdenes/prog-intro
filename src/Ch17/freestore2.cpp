@@ -76,11 +76,14 @@ try
     // print_vector(cout, v2);
 
     // second try
-    vector<int> v2(10);
-    for (int i = 0; i < v1.size(); ++i)
-    {
-        v2[i] = v1[i];
-    }
+    // vector<int> v2(10);
+    // for (int i = 0; i < v1.size(); ++i)
+    // {
+    //     v2[i] = v1[i];
+    // }
+
+    // third try
+    vector<int> v2 {v1};
 
     print_vector(cout, v2);
 
