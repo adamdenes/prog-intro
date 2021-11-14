@@ -37,6 +37,7 @@ void f(int arr[], int size)
     delete[] p;
 }
 
+// #4.
 int main()
 {
     f(ga, 10);
